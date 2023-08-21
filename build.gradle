@@ -39,7 +39,7 @@ dependencies {
   annotationProcessor('org.projectlombok:lombok')
   annotationProcessor('org.springframework.boot:spring-boot-configuration-processor')
   compileOnly('org.projectlombok:lombok')
-  developmentOnly('org.springframework.boot:spring-boot-devtools')
+  developmentOnly('org.springframework.boot:spring-boot-devtools') // enables support for hot swapping
   sonarlintPlugins('org.sonarsource.java:sonar-java-plugin:7.13.0.29990')
 
   implementation('io.github.cdimascio:dotenv-java:2.2.4')

@@ -1,7 +1,10 @@
 ---
 
 application:
+  # The identity of the application for JWT (JSON Web Token) purposes. It's used to ensure that the JWT is intended for this specific application.
   audience: ${env.AUTH0_AUDIENCE}
+  # URL of the client/frontend that interacts with this backend or service.
+  # It can be used in configurations related to CORS (Cross-Origin Resource Sharing) to specify which origins (i.e., client applications) are allowed to access the backend.
   client-origin-url: ${env.CLIENT_ORIGIN_URL}
 
 server:

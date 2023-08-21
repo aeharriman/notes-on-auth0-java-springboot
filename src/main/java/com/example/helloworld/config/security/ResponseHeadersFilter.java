@@ -18,6 +18,9 @@ import org.springframework.stereotype.Component;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public record ResponseHeadersFilter() implements Filter {
 
+  // This is a filter that adds security related features onto an HTTP response
+  // and passes the request and response to the next filter in the chain
+
   @Override
   public void doFilter(
     final ServletRequest request,

@@ -21,9 +21,15 @@ public class ApplicationConfig {
   private final ApplicationProperties applicationProps;
 
   @Bean
+  // This method configures Cross-Origin Resource Sharing (CORS) for the application.
+  // returns an instance of a type that implements the CorsConfigurationSource interface,
+  // which has a method that
+  // returns a CorsConfiguration based on the incoming request.
   public CorsConfigurationSource corsConfigurationSource() {
+
     final var source = new UrlBasedCorsConfigurationSource();
     final var config = new CorsConfiguration();
+    // Define allowed origins from application properties.
     final var origins = List.of(applicationProps.clientOriginUrl());
     final var headers = List.of(HttpHeaders.AUTHORIZATION, HttpHeaders.CONTENT_TYPE);
     final var methods = List.of(HttpMethod.GET.name());
