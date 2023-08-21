@@ -128,3 +128,34 @@ https://github.com/auth0-developer-hub/api_spring_java_hello-world_functional.gi
     - When using JWTs for authentication, the token is signed by the issuer using a private key.
 - **Action**:
     - The recipient (your application) then verifies the JWT's signature using the issuer's public key. This ensures that the JWT was indeed issued by the expected issuer and wasn't tampered with. In the case of Auth0, the public key is often fetched from a well-known endpoint provided by Auth0. The application doesn't need to know the private key; it only needs the public key to verify the JWT's signature.
+
+
+## Visualization:
+
+```mermaid
+graph TD
+    A[HTTP Request] --> B[CORS Check]
+    B --> |Pass| C[Security Filter Chain]
+    B --> |Fail| Z[Denied due to CORS]
+    C --> D[Path Exclusion Check]
+    D --> |Excluded Path| E[Allow without further checks]
+    D --> |Protected/Admin Path| F[Authentication Check]
+    F --> |Has JWT| G[JWT Decoding & Validation]
+    G --> |Valid JWT| H[Access to Resource]
+    G --> |Invalid JWT| I[Error Handling]
+    F --> |No JWT| I
+    I --> J[Denied due to Authentication Error]
+```
+```mermaid
+sequenceDiagram
+    participant HttpRequest as HTTP Request
+    participant CorsFilter as CORS Filter (ApplicationConfig)
+    participant SecurityFilterChain as Security Filter Chain (SecurityConfig)
+    participant Resource as Desired Resource
+    HttpRequest->>CorsFilter: Send Request
+    CorsFilter->>SecurityFilterChain: CORS Check Passed
+    SecurityFilterChain->>SecurityFilterChain: Path Exclusion Check
+    SecurityFilterChain->>SecurityFilterChain: Authentication Check (JWT)
+    SecurityFilterChain->>Resource: Access Granted
+    SecurityFilterChain-->>HttpRequest: Error (if any)
+```
