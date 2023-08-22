@@ -11,6 +11,10 @@ import com.example.helloworld.services.MessageService;
 
 import lombok.RequiredArgsConstructor;
 
+// This is a handler class that contains methods to process the requests. These methods get called by the router
+// It's almost like the 2nd half of the controller, where the service methods get called.
+// Except services are optional, and you can put your business logic here if you want. But this app does have a service.
+
 @Component
 @RequiredArgsConstructor
 public class MessageHandler {

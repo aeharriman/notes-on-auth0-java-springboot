@@ -149,10 +149,13 @@ graph TD
 ```mermaid
 sequenceDiagram
     participant HttpRequest as HTTP Request
+    participant Router as API Router
+    participant Handler as Handler
     participant CorsFilter as CORS Filter (ApplicationConfig)
     participant SecurityFilterChain as Security Filter Chain (SecurityConfig)
     participant Resource as Desired Resource
-    HttpRequest->>CorsFilter: Send Request
+    HttpRequest->>Router: Send Request
+    Router->>Handler: By endpoint
     CorsFilter->>SecurityFilterChain: CORS Check Passed
     SecurityFilterChain->>SecurityFilterChain: Path Exclusion Check
     SecurityFilterChain->>SecurityFilterChain: Authentication Check (JWT)

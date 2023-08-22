@@ -26,12 +26,14 @@ import lombok.RequiredArgsConstructor;
 // This class is configuring the application to act as a Resource Server.
 // The resource server has the endpoints with protected information.
 
-@Configuration
-@RequiredArgsConstructor // Generates constructor requiring all final fields and @NonNull fields
+@Configuration // Tells spring to scan this class for bean definitions
+@RequiredArgsConstructor // Generates constructor requiring all final fields and @NonNull fields.
+// This approach is equivalent to marking each field with @Autowired but is cleaner and follows the recommended practice of using constructor injection
 public class SecurityConfig {
 
   // From spring security, represents properties and configurations related to
   // Oauth2.0 Resource server. Spring automatically binds properties from application.yml to this object
+  // through @ConfigurationProperties(prefix = "spring.security.oauth2.resourceserver")
   // In this case,
   // security:
   //    oauth2:
@@ -91,7 +93,8 @@ public class SecurityConfig {
         .anyRequest()
           .permitAll()
     )
-            // Sets up cors with default settings
+            // Sets up cors with default settings.
+            // The default CORS configuration will look for a bean of type CorsConfigurationSource.
     .cors(Customizer.withDefaults())
             //configures the application as an OAuth 2.0 resource server.
             // This means the application expects incoming requests to have JWTs (JSON Web Tokens) for authentication.

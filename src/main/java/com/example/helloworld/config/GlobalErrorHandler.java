@@ -35,6 +35,7 @@ public record GlobalErrorHandler(ObjectMapper mapper) {
   // @Cacheable is an annotation that indicates that the result of invoking a method (in this case, handleInternalError)
   // can be cached. The next time the method is called with the same arguments, the cached result is returned
   // instead of invoking the method again. This can improve performance by avoiding unnecessary computations.
+  // ServerResponse is from WebFlux, defines response fluently. Equivalent in Spring MVC is ResponseEntity
   @Cacheable
   public ServerResponse handleInternalError(final Throwable error, final ServerRequest request) {
     // This method handles internal server errors and returns a custom error message with the error's message.
@@ -42,6 +43,7 @@ public record GlobalErrorHandler(ObjectMapper mapper) {
       .body(ErrorMessage.from(error.getMessage()));
   }
 
+  // HttpServletResponse is lower level, gives fine grain control over response creation.
   @Cacheable
   public void handleAuthenticationError(
     final HttpServletRequest request,

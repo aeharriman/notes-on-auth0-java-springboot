@@ -9,10 +9,15 @@ import org.springframework.web.servlet.function.ServerResponse;
 
 import com.example.helloworld.handlers.MessageHandler;
 
-@Configuration
+@Configuration // spring scans this class for beans
 public class Router {
 
+  // Spring MVC: Controller-Service-Repo
+  // Spring WebFlux: Router-Handler-Repo
+
+  // This bean routes incoming HTTP requests to appropriate handler methods. It's kind of like a controller
   @Bean
+  // Spring WebFlux version of RequestMapping
   public RouterFunction<ServerResponse> apiRouter(
     final MessageHandler messageHandler,
     final GlobalErrorHandler globalErrorHandler
@@ -21,8 +26,10 @@ public class Router {
     final var messages = api.messagesPath();
 
     return route()
+            // base path /api
       .path(api.segment(), () ->
         route()
+                // /api/messages
           .path(messages.segment(), () ->
             route()
               .GET(messages.publicPath().segment(), messageHandler::getPublic)

@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.helloworld.models.Message;
 
+// A note. Nowhere in this app are admin and protected treated differently, which is confusing given it looks like they were trying to implement Role-based access.
 @Service
 public record MessageService() {
 
