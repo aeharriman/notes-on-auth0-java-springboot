@@ -89,11 +89,11 @@ https://github.com/auth0-developer-hub/api_spring_java_hello-world_functional.gi
 - **Description**:
     - Before the actual request, the browser might send a CORS preflight request (using the `OPTIONS` HTTP method) to check if it's safe to send the actual request.
 - **Action**:
-    - The `CorsFilter` in `ApplicationConfig` checks this preflight request against the CORS configuration you've set up. If the request's origin, headers, methods, etc., are not allowed by your CORS configuration, the request will be denied right here.
+    - The `CorsFilter` in `ApplicationConfig` checks this preflight request against the CORS configuration you've set up. If the request's origin, headers, methods, etc., are not allowed by your CORS configuration, the browser will not send the actual request.
 
 ## 2. Security Filter Chain:
 - **Description**:
-    - If the CORS check passes, the request enters the `SecurityFilterChain` in the SecurityConfig.
+    - If the CORS check passes, the browser makes an actual request, which enters the `SecurityFilterChain` in the SecurityConfig.
 - **Action**:
     - The `HttpSecurity` configuration in `SecurityConfig` is applied. This configuration dictates how different types of requests should be handled.
 
@@ -107,6 +107,7 @@ https://github.com/auth0-developer-hub/api_spring_java_hello-world_functional.gi
 - **Description**:
     - After decoding, the JWT's claims (like issuer and audience) are validated.
 - **Action**:
+- Note. JWTS are Base64Url encoded not for encryption, but to be safe from special character issues with urls
     - The issuer is checked to ensure it matches the expected issuer (from Auth0). The audience is checked to ensure the token is intended for this application. If any of these checks fail, the request is denied.
 
 ## 3. Processing the Request:
@@ -161,11 +162,12 @@ sequenceDiagram
 HttpRequest->>CorsFilter: Preflight Request<br/> Could be cached or unnecessary
   Note over HttpRequest,CorsFilter: OPTIONS /api/messages/protected<br/>Origin: http://localhost:4040<br/>Access-Control-Request-Method: GET<br/>Access-Control-Request-Headers: Authorization, Content-Type
   CorsFilter->>HttpRequest: Preflight Response
-  Note over CorsFilter,HttpRequest: Status: 200 (OK)<br/>Access-Control-Allow-Origin: http://localhost:4040<br/>Access-Control-Allow-Methods: GET, OPTIONS<br/>Access-Control-Allow-Headers: Authorization, Content-Type<br/>Access-Control-Max-Age: 86400<br/>OR <br/>403 Forbidden (Browser doesn't make actual request)
+  Note over CorsFilter,HttpRequest: Status: 200 (OK)<br/>Access-Control-Allow-Origin: http://localhost:4040<br/>Access-Control-Allow-Methods: GET<br/>Access-Control-Allow-Headers: Authorization, Content-Type<br/>Access-Control-Max-Age: 86400<br/>OR <br/>403 Forbidden (Browser doesn't make actual request)
   HttpRequest->>SecurityFilterChain: Send Actual Request
-  Note over HttpRequest,SecurityFilterChain: GET /api/messages/protected<br/>Origin: http://localhost:4040<br/>X-Custom-Header: custom-value<br/>Other headers and request body...
+  Note over HttpRequest,SecurityFilterChain: GET /api/messages/protected<br/>Authorization: Bearer (JWT access token)
   SecurityFilterChain->>SecurityFilterChain: Path Exclusion Check for /protected and /admin
-  SecurityFilterChain->>SecurityFilterChain: Authentication Check (JWT)<br/>Check Issuer URI corresponds with Auth0 server<br/>Check Audience is https://hello-world.example.com
+  Note over SecurityFilterChain: Authentication Check (JWT)<br/>NimbusJwtDecoder automatically:<br/>Fetches public key from JWKS endpoint and verifies JWT signature.<br/>Checks JWT's exp claim to ensure it's not expired.<br/>If JWT has nbf claim, ensures current time is after it.<br/>Validates JWT's iss claim matches expected issuer (Auth0)<br/>Check aud is https://hello-world.example.com
+  SecurityFilterChain->>SecurityFilterChain: 
   SecurityFilterChain-->>HttpRequest: handleAuthenticationError
   Note over HttpRequest,SecurityFilterChain: Status: 401  APPLICATION_JSON<br/>Body: {"message": "Requires authentication"}
   SecurityFilterChain->>Router: Access Granted
@@ -180,7 +182,7 @@ HttpRequest->>CorsFilter: Preflight Request<br/> Could be cached or unnecessary
 Handler->>ResponseHeadersFilter: Add Security Headers
 Note over ResponseHeadersFilter: Set security-related headers: <br/>X-XSS-Protection, Strict-Transport-Security, etc.
 ResponseHeadersFilter->>HttpRequest: Response
-Note over HttpRequest, ResponseHeadersFilter: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}<br/>Headers:X-XSS-Protection, Strict-Transport-Security, etc.
+Note over HttpRequest, ResponseHeadersFilter: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}<br/>Headers: Access-Control-Allow-Origin: http://localhost:4040, Security headers, etc
 
 Note right of HttpRequest: Browser checks for CORS headers.<br/> If missing or incorrect,<br/> browser blocks access<br/> to the response and logs a security error.<br/>Prevents unauthorized sites<br/> from reading respnses
 
