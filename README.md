@@ -150,7 +150,7 @@ graph TD
 ### Composite sequence diagram
 ```mermaid
 sequenceDiagram
-  participant HttpReq as HTTP/Browser
+  participant Http as HTTP/Browser
   participant CorsF as CORS Filter (ApplicationConfig)
   participant SecFChain as Security Filter Chain (SecurityConfig)
   participant Router as Router
@@ -158,35 +158,36 @@ sequenceDiagram
   participant Handler as Handler
   participant Service as Service
 
-  HttpReq->>CorsF: Preflight Request<br/> Could be cached or unnecessary
-  Note over HttpReq,CorsF: OPTIONS /api/messages/protected<br/>Origin: http://localhost:4040<br/>Access-Control-Request-Method: GET<br/>Access-Control-Request-Headers: Authorization, Content-Type
-  CorsF->>HttpReq: Preflight Response
-  Note over CorsF,HttpReq: Status: 200 (OK)<br/>Access-Control-Allow-Origin: http://localhost:4040<br/>Access-Control-Allow-Methods: GET<br/>Access-Control-Allow-Headers: Authorization, Content-Type<br/>Access-Control-Max-Age: 86400<br/>OR <br/>403 Forbidden (Browser doesn't make actual request)
-  HttpReq->>SecFChain: Send Actual Request
-  Note over HttpReq,SecFChain: GET /api/messages/protected<br/>Authorization: Bearer (JWT access token)
+  Http->>CorsF: Preflight Request<br/> Could be cached or unnecessary
+  Note over Http,CorsF: OPTIONS /api/messages/protected<br/>Origin: http://localhost:4040<br/>Access-Control-Request-Method: GET<br/>Access-Control-Request-Headers: Authorization, Content-Type
+  CorsF->>Http: Preflight Response
+  Note over CorsF,Http: Status: 200 (OK)<br/>Access-Control-Allow-Origin: http://localhost:4040<br/>Access-Control-Allow-Methods: GET<br/>Access-Control-Allow-Headers: Authorization, Content-Type<br/>Access-Control-Max-Age: 86400<br/>OR <br/>403 Forbidden (Browser doesn't make actual request)
+  Http->>SecFChain: Send Actual Request
+  Note over Http,SecFChain: GET /api/messages/protected<br/>Authorization: Bearer (JWT access token)
   SecFChain->>SecFChain: Path Exclusion Check for /protected and /admin
   Note over SecFChain: Authentication Check (JWT)<br/>NimbusJwtDecoder automatically:<br/>Fetches public key from JWKS endpoint and verifies JWT signature.<br/>Checks JWT's exp claim to ensure it's not expired.<br/>If JWT has nbf claim, ensures current time is after it.<br/>Validates JWT's iss claim matches expected issuer (Auth0)<br/>Check aud is https://hello-world.example.com
   SecFChain->>SecFChain: .
-  SecFChain-->>HttpReq: handleAuthenticationError
-  Note over HttpReq,SecFChain: Status: 401  APPLICATION_JSON<br/>Body: {"message": "Requires authentication"}
+  SecFChain-->>Http: handleAuthenticationError
+  Note over Http,SecFChain: Status: 401  APPLICATION_JSON<br/>Body: {"message": "Requires authentication"}
   SecFChain->>Router: Access Granted
   Router->>Handler: /protected -> getProtected(ServerRequest)
-  Router-->>HttpReq: handleInternalError
-  Note over HttpReq,Router: Status: 500 (INTERNAL_SERVER_ERROR)<br/>Content-Type: Determined by ServerResponse<br/>Body: Error message from the thrown error
+  Router-->>Http: handleInternalError
+  Note over Http,Router: Status: 500 (INTERNAL_SERVER_ERROR)<br/>Content-Type: Determined by ServerResponse<br/>Body: Error message from the thrown error
   Handler->>Service: getProtectedMessage(), returns Message
   Note left of Service: If there was a repo,<br/>this service method<br/>would interact with it
   Service->>Handler: returns Message
   Handler->>RespHeaders: Build response
   Note over Handler, RespHeaders: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}
   Note over RespHeaders: Set security-related headers: <br/>X-XSS-Protection, Strict-Transport-Security, etc.
-  RespHeaders->>HttpReq: Response
-  Note over HttpReq, RespHeaders: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}<br/>Headers: Access-Control-Allow-Origin: http://localhost:4040, Security headers, etc
-  Note right of HttpReq: Browser checks for CORS headers.<br/> If missing or incorrect,<br/> browser blocks access<br/> to the response and logs a security error.<br/>Prevents unauthorized sites<br/> from reading responses
+  RespHeaders->>Http: Response
+  Note over Http, RespHeaders: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}<br/>Headers: Access-Control-Allow-Origin: http://localhost:4040, Security headers, etc
+  Note right of Http: Browser checks for CORS headers.<br/> If missing or incorrect,<br/> browser blocks access<br/> to the response and logs a security error.<br/>Prevents unauthorized sites<br/> from reading responses
 ```
+
 ### Happy path diagram
 ```mermaid
 sequenceDiagram
-  participant HttpReq as HTTP/Browser
+  participant Http as HTTP/Browser
   participant CorsF as CORS Filter (ApplicationConfig)
   participant SecFChain as Security Filter Chain (SecurityConfig)
   participant Router as Router
@@ -194,12 +195,12 @@ sequenceDiagram
   participant Handler as Handler
   participant Service as Service
 
-  HttpReq->>CorsF: Preflight Request<br/> Could be cached or unnecessary
-  Note over HttpReq,CorsF: OPTIONS /api/messages/protected<br/>Origin: http://localhost:4040<br/>Access-Control-Request-Method: GET<br/>Access-Control-Request-Headers: Authorization, Content-Type
-  CorsF->>HttpReq: Preflight Response
-  Note over CorsF,HttpReq: Status: 200 (OK)<br/>Access-Control-Allow-Origin: http://localhost:4040<br/>Access-Control-Allow-Methods: GET<br/>Access-Control-Allow-Headers: Authorization, Content-Type<br/>Access-Control-Max-Age: 86400
-  HttpReq->>SecFChain: Send Actual Request
-  Note over HttpReq,SecFChain: GET /api/messages/protected<br/>Authorization: Bearer (JWT access token)
+  Http->>CorsF: Preflight Request<br/> Could be cached or unnecessary
+  Note over Http,CorsF: OPTIONS /api/messages/protected<br/>Origin: http://localhost:4040<br/>Access-Control-Request-Method: GET<br/>Access-Control-Request-Headers: Authorization, Content-Type
+  CorsF->>Http: Preflight Response
+  Note over CorsF,Http: Status: 200 (OK)<br/>Access-Control-Allow-Origin: http://localhost:4040<br/>Access-Control-Allow-Methods: GET<br/>Access-Control-Allow-Headers: Authorization, Content-Type<br/>Access-Control-Max-Age: 86400
+  Http->>SecFChain: Send Actual Request
+  Note over Http,SecFChain: GET /api/messages/protected<br/>Authorization: Bearer (JWT access token)
   SecFChain->>SecFChain: Path Exclusion Check for /protected and /admin
   Note over SecFChain: Authentication Check (JWT)<br/>NimbusJwtDecoder automatically:<br/>Fetches public key from JWKS endpoint and verifies JWT signature.<br/>Checks JWT's exp claim to ensure it's not expired.<br/>If JWT has nbf claim, ensures current time is after it.<br/>Validates JWT's iss claim matches expected issuer (Auth0)<br/>Check aud is https://hello-world.example.com
   SecFChain->>SecFChain: .
@@ -211,7 +212,107 @@ sequenceDiagram
   Handler->>RespHeaders: Build response
   Note over Handler, RespHeaders: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}
   Note over RespHeaders: Set security-related headers: <br/>X-XSS-Protection, Strict-Transport-Security, etc.
-  RespHeaders->>HttpReq: Response
-  Note over HttpReq, RespHeaders: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}<br/>Headers: Access-Control-Allow-Origin: http://localhost:4040, Security headers, etc
-  Note right of HttpReq: Browser sees<br/> Access-Control-Allow-Origin:<br/> http://localhost:4040<br/>and displays content
+  RespHeaders->>Http: Response
+  Note over Http, RespHeaders: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}<br/>Headers: Access-Control-Allow-Origin: http://localhost:4040, Security headers, etc
+  Note right of Http: Browser sees<br/> Access-Control-Allow-Origin:<br/> http://localhost:4040<br/>and displays content
+```
+
+### CORS rejection
+```mermaid
+sequenceDiagram
+  participant Http as HTTP/Browser
+  participant CorsF as CORS Filter (ApplicationConfig)
+  participant SecFChain as Security Filter Chain (SecurityConfig)
+  participant Router as Router
+  participant RespHeaders as Response Headers Filter
+  participant Handler as Handler
+  participant Service as Service
+
+  Http->>CorsF: Preflight Request<br/> Could be cached or unnecessary
+  Note over Http,CorsF: OPTIONS /api/messages/protected<br/>Origin: http://localhost:4040<br/>Access-Control-Request-Method: GET<br/>Access-Control-Request-Headers: Authorization, Content-Type
+  CorsF->>Http: Preflight Response
+  Note over CorsF,Http: 403 Forbidden (Browser doesn't make actual request)
+  ```
+
+### Issue with JWT
+```mermaid
+sequenceDiagram
+  participant Http as HTTP/Browser
+  participant CorsF as CORS Filter (ApplicationConfig)
+  participant SecFChain as Security Filter Chain (SecurityConfig)
+  participant Router as Router
+  participant RespHeaders as Response Headers Filter
+  participant Handler as Handler
+  participant Service as Service
+
+  Http->>CorsF: Preflight Request<br/> Could be cached or unnecessary
+  Note over Http,CorsF: OPTIONS /api/messages/protected<br/>Origin: http://localhost:4040<br/>Access-Control-Request-Method: GET<br/>Access-Control-Request-Headers: Authorization, Content-Type
+  CorsF->>Http: Preflight Response
+  Note over CorsF,Http: Status: 200 (OK)<br/>Access-Control-Allow-Origin: http://localhost:4040<br/>Access-Control-Allow-Methods: GET<br/>Access-Control-Allow-Headers: Authorization, Content-Type<br/>Access-Control-Max-Age: 86400
+  Http->>SecFChain: Send Actual Request
+  Note over Http,SecFChain: GET /api/messages/protected<br/>Authorization: Bearer (JWT access token)
+  SecFChain->>SecFChain: Path Exclusion Check for /protected and /admin
+  Note over SecFChain: Authentication Check (JWT)<br/>NimbusJwtDecoder automatically:<br/>Fetches public key from JWKS endpoint and verifies JWT signature.<br/>Checks JWT's exp claim to ensure it's not expired.<br/>If JWT has nbf claim, ensures current time is after it.<br/>Validates JWT's iss claim matches expected issuer (Auth0)<br/>Check aud is https://hello-world.example.com
+  SecFChain->>SecFChain: .
+  SecFChain-->>Http: handleAuthenticationError
+  Note over Http,SecFChain: Status: 401  APPLICATION_JSON<br/>Body: {"message": "Requires authentication"}
+  ```
+
+### Internal Server Error
+```mermaid
+sequenceDiagram
+  participant Http as HTTP/Browser
+  participant CorsF as CORS Filter (ApplicationConfig)
+  participant SecFChain as Security Filter Chain (SecurityConfig)
+  participant Router as Router
+  participant RespHeaders as Response Headers Filter
+  participant Handler as Handler
+  participant Service as Service
+
+  Http->>CorsF: Preflight Request<br/> Could be cached or unnecessary
+  Note over Http,CorsF: OPTIONS /api/messages/protected<br/>Origin: http://localhost:4040<br/>Access-Control-Request-Method: GET<br/>Access-Control-Request-Headers: Authorization, Content-Type
+  CorsF->>Http: Preflight Response
+  Note over CorsF,Http: Status: 200 (OK)<br/>Access-Control-Allow-Origin: http://localhost:4040<br/>Access-Control-Allow-Methods: GET<br/>Access-Control-Allow-Headers: Authorization, Content-Type<br/>Access-Control-Max-Age: 86400
+  Http->>SecFChain: Send Actual Request
+  Note over Http,SecFChain: GET /api/messages/protected<br/>Authorization: Bearer (JWT access token)
+  SecFChain->>SecFChain: Path Exclusion Check for /protected and /admin
+  Note over SecFChain: Authentication Check (JWT)<br/>NimbusJwtDecoder automatically:<br/>Fetches public key from JWKS endpoint and verifies JWT signature.<br/>Checks JWT's exp claim to ensure it's not expired.<br/>If JWT has nbf claim, ensures current time is after it.<br/>Validates JWT's iss claim matches expected issuer (Auth0)<br/>Check aud is https://hello-world.example.com
+  SecFChain->>SecFChain: .
+  SecFChain->>Router: Access Granted
+  Note over Router: ¡ Error occurs in call stack past router !
+  Router-->>Http: handleInternalError
+  Note over Http,Router: Status: 500 (INTERNAL_SERVER_ERROR)<br/>Content-Type: Determined by ServerResponse<br/>Body: Error message from the thrown error
+  ```
+
+### CORS Headers missing/wrong in response
+```mermaid
+sequenceDiagram
+  participant Http as HTTP/Browser
+  participant CorsF as CORS Filter (ApplicationConfig)
+  participant SecFChain as Security Filter Chain (SecurityConfig)
+  participant Router as Router
+  participant RespHeaders as Response Headers Filter
+  participant Handler as Handler
+  participant Service as Service
+
+  Http->>CorsF: Preflight Request<br/> Could be cached or unnecessary
+  Note over Http,CorsF: OPTIONS /api/messages/protected<br/>Origin: http://localhost:4040<br/>Access-Control-Request-Method: GET<br/>Access-Control-Request-Headers: Authorization, Content-Type
+  CorsF->>Http: Preflight Response
+  Note over CorsF,Http: Status: 200 (OK)<br/>Access-Control-Allow-Origin: http://localhost:4040<br/>Access-Control-Allow-Methods: GET<br/>Access-Control-Allow-Headers: Authorization, Content-Type<br/>Access-Control-Max-Age: 86400<br/>
+  Http->>SecFChain: Send Actual Request
+  Note over Http,SecFChain: GET /api/messages/protected<br/>Authorization: Bearer (JWT access token)
+  SecFChain->>SecFChain: Path Exclusion Check for /protected and /admin
+  Note over SecFChain: Authentication Check (JWT)<br/>NimbusJwtDecoder automatically:<br/>Fetches public key from JWKS endpoint and verifies JWT signature.<br/>Checks JWT's exp claim to ensure it's not expired.<br/>If JWT has nbf claim, ensures current time is after it.<br/>Validates JWT's iss claim matches expected issuer (Auth0)<br/>Check aud is https://hello-world.example.com
+  SecFChain->>SecFChain: .
+  SecFChain->>Router: Access Granted
+  Router->>Handler: /protected -> getProtected(ServerRequest)
+    Handler->>Service: getProtectedMessage(), returns Message
+  Note left of Service: If there was a repo,<br/>this service method<br/>would interact with it
+  Service->>Handler: returns Message
+  Handler->>RespHeaders: Build response
+  Note over Handler, RespHeaders: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}
+  Note over RespHeaders: Set security-related headers: <br/>X-XSS-Protection, Strict-Transport-Security, etc.
+  RespHeaders->>Http: Response
+  Note over Http, RespHeaders: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}<br/>Headers: Access-Control-Allow-Origin: http://wrongOrMissing, Security headers, etc
+  Note right of Http: Browser checks for CORS headers.<br/> Missing or incorrect, so<br/> browser blocks access<br/> to the response and logs a security error.<br/>Prevents unauthorized sites<br/> from reading responses
 ```
