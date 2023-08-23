@@ -147,17 +147,41 @@ graph TD
 ```
 ```mermaid
 sequenceDiagram
-    participant HttpRequest as HTTP Request
-    participant Router as API Router
-    participant Handler as Handler
-    participant CorsFilter as CORS Filter (ApplicationConfig)
-    participant SecurityFilterChain as Security Filter Chain (SecurityConfig)
-    participant Resource as Desired Resource
-    HttpRequest->>Router: Send Request
-    Router->>Handler: By endpoint
-    CorsFilter->>SecurityFilterChain: CORS Check Passed
-    SecurityFilterChain->>SecurityFilterChain: Path Exclusion Check
-    SecurityFilterChain->>SecurityFilterChain: Authentication Check (JWT)
-    SecurityFilterChain->>Resource: Access Granted
-    SecurityFilterChain-->>HttpRequest: Error (if any)
+
+  participant HttpRequest as HTTP
+  participant CorsFilter as CORS Filter (ApplicationConfig)
+  participant SecurityFilterChain as Security Filter Chain (SecurityConfig)
+  participant Router as Router
+  participant ResponseHeadersFilter as Response Headers Filter
+
+  participant Handler as Handler
+  participant Service as Service
+
+
+HttpRequest->>CorsFilter: Preflight Request<br/> Could be cached or unnecessary
+  Note over HttpRequest,CorsFilter: OPTIONS /api/messages/protected<br/>Origin: http://localhost:4040<br/>Access-Control-Request-Method: GET<br/>Access-Control-Request-Headers: Authorization, Content-Type
+  CorsFilter->>HttpRequest: Preflight Response
+  Note over CorsFilter,HttpRequest: Status: 200 (OK)<br/>Access-Control-Allow-Origin: http://localhost:4040<br/>Access-Control-Allow-Methods: GET, OPTIONS<br/>Access-Control-Allow-Headers: Authorization, Content-Type<br/>Access-Control-Max-Age: 86400<br/>OR <br/>403 Forbidden (Browser doesn't make actual request)
+  HttpRequest->>SecurityFilterChain: Send Actual Request
+  Note over HttpRequest,SecurityFilterChain: GET /api/messages/protected<br/>Origin: http://localhost:4040<br/>X-Custom-Header: custom-value<br/>Other headers and request body...
+  SecurityFilterChain->>SecurityFilterChain: Path Exclusion Check for /protected and /admin
+  SecurityFilterChain->>SecurityFilterChain: Authentication Check (JWT)<br/>Check Issuer URI corresponds with Auth0 server<br/>Check Audience is https://hello-world.example.com
+  SecurityFilterChain-->>HttpRequest: handleAuthenticationError
+  Note over HttpRequest,SecurityFilterChain: Status: 401  APPLICATION_JSON<br/>Body: {"message": "Requires authentication"}
+  SecurityFilterChain->>Router: Access Granted
+  Router->>Handler: /protected -> getProtected(ServerRequest)
+  Router-->>HttpRequest: handleInternalError
+  Note over HttpRequest,Router: Status: 500 (INTERNAL_SERVER_ERROR)<br/>Content-Type: Determined by ServerResponse<br/>Body: Error message from the thrown error
+
+  Handler->>Service: getProtectedMessage(), returns Message
+  Note left of Service: If there was a repo,<br/>this service method<br/>would interact with it
+  Service->>Handler: Build Response
+  Note over Service,Handler: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}
+Handler->>ResponseHeadersFilter: Add Security Headers
+Note over ResponseHeadersFilter: Set security-related headers: <br/>X-XSS-Protection, Strict-Transport-Security, etc.
+ResponseHeadersFilter->>HttpRequest: Response
+Note over HttpRequest, ResponseHeadersFilter: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}<br/>Headers:X-XSS-Protection, Strict-Transport-Security, etc.
+
+Note right of HttpRequest: Browser checks for CORS headers.<br/> If missing or incorrect,<br/> browser blocks access<br/> to the response and logs a security error.<br/>Prevents unauthorized sites<br/> from reading respnses
+
 ```
