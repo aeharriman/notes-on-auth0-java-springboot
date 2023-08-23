@@ -58,7 +58,7 @@ sequenceDiagram
 ### Updated with transferred info and related protocols
 ```mermaid
 sequenceDiagram
-    participant User
+    participant User as User/Browser
     participant Client as React Frontend
     participant Auth0 as Auth0 Login page/Auth server
     participant IdP as Identity Provider (IdP)
@@ -66,18 +66,19 @@ sequenceDiagram
 
     User->>Client: 1. Request resource
     Client->>Auth0: 2. Redirect to Universal Login (OAuth2.0)
-    User->>Auth0: 3. Choose Identity Provider (e.g., Google, LinkedIn)
-    Auth0->>IdP: 4. Redirect user for authentication (OIDC)
-    User->>IdP: 5. Authenticate & grant permission (OIDC)
-    IdP->>Auth0: 6. Send authentication assertion with user data (JWT) (OIDC)
-    Note over Auth0: Auth0 grants Authorization code.<br/>It's used to ensure that the client application<br/>that initiated the authentication is the same one<br/>receiving the tokens.
-    Auth0->>User: 7. Redirect user's browser to client redirect uri <br/>authorization code as query parameter (JWT)(OAuth2.0)
-    User->>Client: 8. authorization code (OAuth2.0)
-    Client->>Auth0: 9. auth0-react library hits /tokens<br/> authorization code (OAuth2.0)<br/> Client ID<br/> Client secret
-    Auth0->>Client: 10. ID Token based on auth assertion info (JWT) (OIDC)<br/>& Access Token (JWT) (OAuth2.0)
-    Client->>RS: 11. Request resource with Access Token (OAuth2.0)
-    RS->>Client: 12. Provide requested resource (OAuth2.0)
-    Client->>User: Display resource
+    Auth0->>User: 3. Login page displays in browser
+    User->>Auth0: 4. Choose Identity Provider (e.g., Google, LinkedIn)
+    Auth0->>IdP: 5. Redirect user for authentication (OIDC)
+    User->>IdP: 6. Authenticate & grant permission (OIDC)
+    IdP->>Auth0: 7. Send authentication assertion with user data (JWT) (OIDC)
+    Note over Auth0: 8. Auth0 grants Authorization code.<br/>It's used to ensure that the client application<br/>that initiated the authentication is the same one<br/>receiving the tokens.
+    Auth0->>User: 9. Redirect user's browser to client redirect uri <br/>authorization code as query parameter (JWT)(OAuth2.0)
+    User->>Client: 10. authorization code (OAuth2.0)
+    Client->>Auth0: 11. auth0-react library hits /tokens<br/> authorization code (OAuth2.0)<br/> Client ID<br/> Client secret
+    Auth0->>Client: 12. ID Token based on auth assertion info (JWT) (OIDC)<br/>& Access Token (JWT) (OAuth2.0)
+    Client->>RS: 13. Request resource with Access Token (OAuth2.0)
+    RS->>Client: 14. Provide requested resource (OAuth2.0)
+    Client->>User: 15. Display resource
 ```
 
 Original remote:
