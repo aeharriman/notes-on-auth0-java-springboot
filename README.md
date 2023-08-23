@@ -177,9 +177,10 @@ HttpRequest->>CorsFilter: Preflight Request<br/> Could be cached or unnecessary
 
   Handler->>Service: getProtectedMessage(), returns Message
   Note left of Service: If there was a repo,<br/>this service method<br/>would interact with it
-  Service->>Handler: Build Response
-  Note over Service,Handler: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}
-Handler->>ResponseHeadersFilter: Add Security Headers
+  Service->>Handler: returns Message
+Handler->>ResponseHeadersFilter: Build response
+Note over Handler, ResponseHeadersFilter: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}
+
 Note over ResponseHeadersFilter: Set security-related headers: <br/>X-XSS-Protection, Strict-Transport-Security, etc.
 ResponseHeadersFilter->>HttpRequest: Response
 Note over HttpRequest, ResponseHeadersFilter: Status: 200 (OK)<br/>Body: {"text": "This is a protected message."}<br/>Headers: Access-Control-Allow-Origin: http://localhost:4040, Security headers, etc
